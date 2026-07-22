@@ -484,10 +484,8 @@ function postBlind(idx,amt){
   p.chips-=actual;
   p.streetBet+=actual;
   G.pot+=actual;
-  p.lastAction=actual<amt?'allin':'call';
-  if(actual<amt&&p.chips===0)p.lastAction='allin';
-  G.actedThisRound[idx]=true;
-  G.turn=idx; // Will advance from here
+  p.lastAction='';
+  // Don't mark as acted — SB/BB still need to act in the betting round
 }
 
 // ========== Action ==========
