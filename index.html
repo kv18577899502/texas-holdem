@@ -445,12 +445,16 @@ function newHand(){
   const me=G.players[MY_INDEX]||{name:'🧑 你',chips:1000,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false,handResult:null};
   me.hole=[];me.folded=false;me.streetBet=0;me.lastAction='';me.showHand=false;me.handResult=null;
   G.players=[me,...AI_NAMES.map(n=>({name:n,chips:500,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false,handResult:null}))];
+  G.playedThis=G.players.map((_,i)=>i);
 
   // Ensure chips
   G.players.forEach(p=>{if(p.chips<=0)p.chips=500;p.out=p.chips<=0});
 
   // Deal hole
   G.players.forEach(p=>{p.hole=[G.deck.pop(),G.deck.pop()]});
+
+  // Init acted-this-round tracking BEFORE any actions
+  G.actedThisRound=G.players.map(()=>false);
 
   // Blinds
   const sbIdx=(G.dealer+1)%G.players.length;
@@ -465,10 +469,8 @@ function newHand(){
 
   // First to act: UTG (player left of BB)
   G.turn=(bbIdx+1)%G.players.length;
-  // Skip folded/all-in
+  // Skip folded/all-in (G.actedThisRound now valid)
   advanceTurn();
-
-  G.actedThisRound=G.players.map(()=>false);
 
   startBtn.textContent='♠ 重新发牌';
   render();
