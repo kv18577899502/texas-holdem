@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>德州扑克诊断</title></head>
+<body style="background:#1a1a2e;color:#fff;font-family:monospace;padding:20px">
+<h2>德州扑克诊断工具</h2>
+<button id="testBtn" style="padding:10px 20px;font-size:16px">点击测试 newHand()</button>
+<pre id="log" style="background:#000;padding:12px;border-radius:6px;margin-top:12px;min-height:200px;white-space:pre-wrap">等待测试...</pre>
+<script>
+const log = document.getElementById('log');
+function l(msg){ log.textContent += msg + '\n'; console.log(msg); }
+
+// Minimal game code
+const SUITS = ['♠','♥','♦','♣'];
+const RANK_ORDER = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const RANK_VAL = {}; RANK_ORDER.forEach((r,i)=>RANK_VAL[r]=i+2);
+function val(c){return RANK_VAL[c.r]}
+function createDeck(){const d=[];for(const s of SUITS)for(const r of RANK_ORDER)d.push({r,s});return d}
+function shuffle(d){for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}return d}
+
+const G = { deck:[], comm:[], players:[], pot:0, dealer:0, turn:0, street:'idle', roundOver:false, currentBet:0, lastRaise:0, actedThisRound:[], smallBlind:5, bigBlind:10 };
+const AI_NAMES = ['👾 阿尔法','👾 贝塔','👾 伽马'];
+
+function postBlind(idx, amt){
+  l(`  下盲注: 玩家${idx} $${amt}`);
+  const p=G.players[idx];
+  const actual=Math.min(amt,p.chips);
+  p.chips-=actual;
+  p.streetBet+=actual;
+  G.pot+=actual;
+  p.lastAction='call';
+  G.actedThisRound[idx]=true;
+  G.turn=idx;
+}
+
+function advanceTurn(){
+  const n=G.players.length;
+  for(let i=1;i<=n;i++){
+    const idx=(G.turn+i)%n;
+    const p=G.players[idx];
+    l(`  advanceTurn: 检查玩家${idx} folded=${p.folded} out=${p.out} chips=${p.chips} acted=${G.actedThisRound[idx]}`);
+    if(!p.folded&&!p.out&&p.chips>0&&G.actedThisRound[idx]===false){
+      G.turn=idx;
+      l(`  → 轮到玩家${idx} (${p.name})`);
+      return idx;
+    }
+  }
+  l(`  advanceTurn: 没有找到可行动的玩家`);
+  return -1;
+}
+
+function newHand(){
+  l('=== newHand() 开始 ===');
+  G.deck=shuffle(createDeck());
+  G.comm=[]; G.pot=0; G.street='preflop'; G.roundOver=false;
+
+  const me=G.players[0]||{name:'🧑 你',chips:1000,hole:[]};
+  me.hole=[]; me.folded=false; me.streetBet=0; me.lastAction='';
+  G.players=[me,...AI_NAMES.map(n=>({name:n,chips:500,hole:[],folded:false,out:false,streetBet:0,lastAction:''}))];
+  
+  l(`玩家数量: ${G.players.length}`);
+  G.players.forEach((p,i)=>l(`  玩家${i}: ${p.name} chips=${p.chips}`));
+
+  G.actedThisRound=G.players.map(()=>false);
+  l(`actedThisRound 初始化: [${G.actedThisRound}]`);
+
+  G.players.forEach(p=>{p.hole=[G.deck.pop(),G.deck.pop()]; l(`  ${p.name} 手牌: ${p.hole[0].r}${p.hole[0].s} ${p.hole[1].r}${p.hole[1].s}`)});
+
+  const sbIdx=(G.dealer+1)%G.players.length;
+  const bbIdx=(G.dealer+2)%G.players.length;
+  l(`庄家=${G.dealer} SB=${sbIdx} BB=${bbIdx}`);
+  postBlind(sbIdx,G.smallBlind);
+  postBlind(bbIdx,G.bigBlind);
+  l(`底池=${G.pot} currentBet=${G.bigBlind}`);
+
+  G.turn=(bbIdx+1)%G.players.length;
+  l(`起始turn=${G.turn}`);
+  const next = advanceTurn();
+  l(`最终turn=${G.turn} (返回=${next})`);
+  
+  l(`=== newHand() 结束 ===\n`);
+}
+
+document.getElementById('testBtn').onclick = () => {
+  log.textContent = '';
+  newHand();
+};
+l('页面已加载，点击按钮测试');
+</script>
+</body>
+</html>
