@@ -3,21 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>德州扑克 · Texas Hold'em</title>
+<title>德州扑克 · 联机版</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-family:-apple-system,'Segoe UI',sans-serif;
     background:linear-gradient(160deg,#0a2f1e,#145c3a,#0a3d28);
     min-height:100vh;color:#fff;overflow-x:hidden;user-select:none
   }
   #app{max-width:960px;margin:0 auto;padding:10px;display:flex;flex-direction:column;min-height:100vh}
 
-  /* Header */
-  .header{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:6px 4px 10px
+  /* == Lobby == */
+  #lobby{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:20px;padding:20px;text-align:center
   }
+  #lobby h2{font-size:24px;margin-bottom:4px}
+  #lobby h2 span{color:#f5c842}
+  #lobby .sub{color:rgba(255,255,255,.4);font-size:13px;margin-bottom:10px}
+  #lobby .input-group{
+    display:flex;gap:8px;width:100%;max-width:360px
+  }
+  #lobby .input-group input{
+    flex:1;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+    background:rgba(255,255,255,.06);color:#fff;font-size:15px;text-align:center;
+    outline:none;transition:border-color .2s
+  }
+  #lobby .input-group input:focus{border-color:#f5c842}
+  #lobby .input-group input::placeholder{color:rgba(255,255,255,.2)}
+  #lobby .btn{
+    padding:12px 28px;border-radius:12px;border:none;font-size:15px;
+    font-weight:600;cursor:pointer;transition:all .15s;min-width:120px
+  }
+  #lobby .btn:active{transform:scale(.95)}
+  #lobby .btn-create{background:#f5c842;color:#222}
+  #lobby .btn-create:hover{background:#ffd740}
+  #lobby .btn-join{background:#42a5f5;color:#fff}
+  #lobby .btn-join:hover{background:#64b5f6}
+  .room-code{font-size:32px;font-weight:700;letter-spacing:6px;color:#f5c842;
+    background:rgba(255,255,255,.05);padding:12px 30px;border-radius:12px;
+    border:1px dashed rgba(255,215,0,.3);margin:8px 0;font-family:monospace}
+  .waiting{color:rgba(255,255,255,.5);font-size:14px;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .err{color:#ef5350;font-size:13px}
+
+  /* == Table == */
+  .header{display:flex;justify-content:space-between;align-items:center;padding:6px 4px 10px}
   .header h1{font-size:20px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
   .header h1 span{color:#f5c842}
   .header .info{display:flex;gap:14px;font-size:13px}
@@ -25,7 +56,6 @@
   .pot-box span{color:#f5c842;font-weight:bold}
   .phase{color:rgba(255,255,255,.6);font-size:13px}
 
-  /* Table */
   .table{
     background:radial-gradient(ellipse at center,#1a7a4a 0%,#0d5c3a 60%,#083d26 100%);
     border-radius:120px 120px 80px 80px;
@@ -34,16 +64,13 @@
     padding:18px 12px 16px;flex:1;display:flex;flex-direction:column;justify-content:space-between;
     position:relative;min-height:300px
   }
-  .table::before{
-    content:'';position:absolute;inset:8px;
+  .table::before{content:'';position:absolute;inset:8px;
     border-radius:110px 110px 70px 70px;
-    border:1px solid rgba(255,215,0,.12);pointer-events:none
-  }
+    border:1px solid rgba(255,215,0,.12);pointer-events:none}
 
   .players-top{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;z-index:1}
   .players-bottom{display:flex;justify-content:center;z-index:1}
 
-  /* Player */
   .player{
     background:rgba(0,0,0,.5);border-radius:10px;padding:6px 12px 8px;
     min-width:120px;text-align:center;backdrop-filter:blur(4px);
@@ -63,7 +90,6 @@
   .player .p-bet{font-size:10px;color:#ffa726;margin-top:-1px}
   .player .p-cards{display:flex;justify-content:center;gap:3px;margin-top:4px}
 
-  /* Cards */
   .card{
     width:44px;height:64px;border-radius:5px;
     background:#fff;color:#222;
@@ -81,28 +107,15 @@
   .card.small .suit{font-size:14px}
   .card.tiny{width:28px;height:40px;font-size:10px}
   .card.tiny .suit{font-size:11px}
-  .card.delay1{animation:dealCard .25s ease-out}
-  .card.delay2{animation:dealCard .25s ease-out .08s both}
-  .card.delay3{animation:dealCard .25s ease-out .16s both}
-  .card.delay4{animation:dealCard .25s ease-out .24s both}
-  .card.delay5{animation:dealCard .25s ease-out .32s both}
 
-  @keyframes dealCard{
-    from{opacity:0;transform:translateY(-20px) rotate(-8deg)}
-    to{opacity:1;transform:translateY(0) rotate(0)}
-  }
-
-  /* Community */
   .center{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
   .community-cards{display:flex;justify-content:center;gap:5px;min-height:72px;align-items:center}
 
-  /* Message */
   .msg{text-align:center;padding:4px;font-size:14px;min-height:24px}
   .msg.win{color:#f5c842;font-size:17px;font-weight:bold;text-shadow:0 0 16px rgba(245,200,66,.3)}
   .msg.lose{color:#ef5350}
   .msg.tie{color:#90caf9}
 
-  /* Controls */
   .controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px 0 4px}
   .controls button{
     padding:9px 22px;border-radius:22px;border:none;
@@ -121,7 +134,6 @@
   .btn-new{background:#26a69a;color:#fff;font-size:15px;padding:10px 30px}
   .btn-start{background:#f5c842;color:#222;font-size:16px;padding:11px 36px}
 
-  /* Bet area */
   .bet-panel{
     display:flex;align-items:center;justify-content:center;gap:8px;
     padding:4px 0 6px;display:none
@@ -136,11 +148,11 @@
   .showdown-info .sh-player .sh-name{font-weight:600}
   .showdown-info .sh-player .sh-hand{color:rgba(255,255,255,.7);font-size:11px}
 
-  /* Mobile */
+  #gameArea{display:none;flex-direction:column;flex:1}
+
   @media(max-width:640px){
     .table{border-radius:60px 60px 40px 40px;padding:12px 6px;min-height:260px}
-    .player{min-width:85px;padding:4px 6px 6px}
-    .player .p-name{font-size:11px}
+    .player{min-width:85px;padding:4px 6px 6px;font-size:11px}
     .card{width:36px;height:52px;font-size:12px}
     .card .suit{font-size:15px}
     .card.small{width:28px;height:42px;font-size:10px}
@@ -150,43 +162,66 @@
     .controls button{padding:7px 14px;font-size:12px;min-width:54px}
     .bet-panel input[type=range]{width:100px}
     .header h1{font-size:17px}
+    .room-code{font-size:24px;padding:10px 20px}
+    #lobby .btn{width:100%}
   }
 </style>
 </head>
 <body>
+
 <div id="app">
-  <div class="header">
-    <h1>♠ <span>德州</span>扑克</h1>
-    <div class="info">
-      <span class="phase" id="phaseLabel">等待开始</span>
-      <div class="pot-box">底池 $<span id="potDisplay">0</span></div>
+
+  <!-- Lobby -->
+  <div id="lobby">
+    <div>
+      <h2>♠ <span>德州扑克</span></h2>
+      <p class="sub">和朋友在线对战 · 浏览器直连 · 无需注册</p>
     </div>
-  </div>
-
-  <div class="table">
-    <div class="players-top" id="playersTop"></div>
-    <div class="center">
-      <div class="community-cards" id="communityCards"></div>
+    <button class="btn btn-create" onclick="createRoom()">🎲 创建房间</button>
+    <div style="width:100%;max-width:360px;display:flex;align-items:center;gap:10px;opacity:.3">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.2)"></div>
+      <span style="font-size:12px">或者</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.2)"></div>
     </div>
-    <div class="players-bottom" id="playersBottom"></div>
+    <div class="input-group">
+      <input type="text" id="roomInput" placeholder="输入房间号" maxlength="9" onkeydown="if(event.key==='Enter')joinRoom()">
+      <button class="btn btn-join" onclick="joinRoom()">加入</button>
+    </div>
+    <div id="lobbyStatus"></div>
   </div>
 
-  <div class="msg" id="msg"></div>
-
-  <div class="bet-panel" id="betPanel">
-    <span style="font-size:12px;opacity:.7;">下注额</span>
-    <input type="range" id="betSlider" min="0" max="100" value="0">
-    <div class="val">$<span id="betValue">0</span></div>
-    <button class="btn-confirm" id="confirmBetBtn">确认下注</button>
-  </div>
-
-  <div class="controls" id="controls">
-    <button class="btn-start" id="startBtn">♠ 开始游戏</button>
+  <!-- Game -->
+  <div id="gameArea">
+    <div class="header">
+      <h1>♠ <span>德州</span>扑克</h1>
+      <div class="info">
+        <span class="phase" id="phaseLabel">等待开始</span>
+        <div class="pot-box">底池 $<span id="potDisplay">0</span></div>
+      </div>
+    </div>
+    <div class="table">
+      <div class="players-top" id="playersTop"></div>
+      <div class="center">
+        <div class="community-cards" id="communityCards"></div>
+      </div>
+      <div class="players-bottom" id="playersBottom"></div>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="bet-panel" id="betPanel">
+      <span style="font-size:12px;opacity:.7;">下注额</span>
+      <input type="range" id="betSlider" min="0" max="100" value="0">
+      <div class="val">$<span id="betValue">0</span></div>
+      <button class="btn-confirm" id="confirmBetBtn">确认下注</button>
+    </div>
+    <div class="controls" id="controls"></div>
   </div>
 </div>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
-// ========== Constants & Helpers ==========
+// ======================================================================
+//  Constants & Helpers
+// ======================================================================
 const SUITS = ['♠','♥','♦','♣'];
 const RANK_ORDER = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
 const RANK_VAL = {}; RANK_ORDER.forEach((r,i)=>RANK_VAL[r]=i+2);
@@ -196,25 +231,24 @@ function createDeck(){
   for(const s of SUITS)for(const r of RANK_ORDER)d.push({r,s});
   return d;
 }
-function shuffle(d){for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}return d}
-function cardId(c){return c.r+c.s}
+function shuffle(d){
+  for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
+  return d;
+}
 function isRed(c){return c.s==='♥'||c.s==='♦'}
 function val(c){return RANK_VAL[c.r]}
 
-// ========== Hand Evaluator ==========
 const HAND_NAMES = ['高牌','一对','两对','三条','顺子','同花','葫芦','四条','同花顺','皇家同花顺'];
 
 function eval5(cs){
   const v=cs.map(val).sort((a,b)=>b-a);
   const byV={};cs.forEach(c=>{const v2=val(c);(byV[v2]||(byV[v2]=[])).push(c)});
   const g=Object.entries(byV).map(([k,ca])=>({v:+k,cnt:ca.length,ca})).sort((a,b)=>b.cnt-a.cnt||b.v-a.v);
-
   const isFlush=cs.every(c=>c.s===cs[0].s);
   const uv=[...new Set(v)].sort((a,b)=>b-a);
   let sHigh=0;
   for(let i=0;i<=uv.length-5;i++){if(uv[i]-uv[i+4]===4){sHigh=uv[i];break}}
   if(!sHigh&&uv[0]===14&&uv.includes(5)&&uv.includes(4)&&uv.includes(3)&&uv.includes(2))sHigh=5;
-
   if(isFlush&&sHigh===14)return{r:9,k:[14],n:'皇家同花顺'};
   if(isFlush&&sHigh)return{r:8,k:[sHigh],n:'同花顺'};
   if(g[0].cnt===4)return{r:7,k:[g[0].v,g[1]?.v||0],n:'四条'};
@@ -228,57 +262,623 @@ function eval5(cs){
 }
 
 function bestHand(cards){
-  if(cards.length<5)return{r:0,k:[],n:'等待'};
+  if(cards.length<5)return null;
   let best=null;
-  // C(n,5) combinations
-  function combos(arr,k,start,cur){
+  (function combos(arr,k,start,cur){
     if(cur.length===k){const r=eval5(cur);if(!best||cmpHands(r,best)>0)best=r;return}
     for(let i=start;i<arr.length;i++){cur.push(arr[i]);combos(arr,k,i+1,cur);cur.pop()}
-  }
-  combos(cards,5,0,[]);
+  })(cards,5,0,[]);
   return best;
 }
-
 function cmpHands(a,b){
   if(a.r!==b.r)return a.r-b.r;
   for(let i=0;i<Math.min(a.k.length,b.k.length);i++)if(a.k[i]!==b.k[i])return a.k[i]-b.k[i];
   return 0;
 }
 
-// ========== Game State ==========
+// ======================================================================
+//  Game State
+// ======================================================================
 const G = {
-  deck:[], comm:[], players:[], pot:0, hand:0,
-  dealer:0, turn:0,           // indexes
-  street:'idle',              // idle | preflop | flop | turn | river | showdown
-  roundOver:false,
-  actionInProgress:false,
-  // Per-street betting state
-  currentBet:0,               // the highest bet on this street
-  lastRaise:0,               // size of last raise (for minimum raise)
-  lastAggressor:-1,          // who made the last raise/bet
-  actedThisRound:[],         // track who has acted each street
-  smallBlind:5,
-  bigBlind:10,
+  deck:[],comm:[],players:[],pot:0,
+  dealer:0,turn:0,street:'idle',roundOver:false,
+  currentBet:0,lastRaise:0,lastAggressor:-1,
+  actedThisRound:[],
+  isHost:false,
+  myIdx:-1,
+  smallBlind:5,bigBlind:10,
 };
 
-const AI_NAMES = ['👾 阿尔法','👾 贝塔','👾 伽马'];
-const MY_INDEX = 0;
+const PHASE_NAMES={idle:'等待开始',preflop:'翻牌前',flop:'翻牌',turn:'转牌',river:'河牌',showdown:'摊牌'};
+const ACTION_TEXT={fold:'弃牌 ✕',check:'过牌 ✓',bet:'下注 ↑',call:'跟注',raise:'加注 ↑',allin:'ALL-IN!'};
 
-// ========== DOM ==========
+// ======================================================================
+//  PeerJS Networking
+// ======================================================================
+let peer = null;
+let conn = null;
+let myRoomCode = '';
+
+// Unique ID prefix
+const ROOM_PREFIX = 'th-';
+
+// Create room
+function createRoom(){
+  const id = ROOM_PREFIX + Math.random().toString(36).substring(2,7);
+  peer = new Peer(id, {debug:0});
+  myRoomCode = id;
+
+  const status = document.getElementById('lobbyStatus');
+  status.innerHTML = `<div style="margin:8px 0">你的房间号</div>
+    <div class="room-code">${id.replace(ROOM_PREFIX,'')}</div>
+    <div class="waiting">⏳ 等待好友加入...</div>`;
+
+  document.querySelector('.btn-create').disabled = true;
+  document.querySelector('.btn-join').disabled = true;
+
+  peer.on('connection', c => {
+    conn = c;
+    conn.on('open', () => {
+      status.innerHTML = '<div style="color:#69f0ae;font-size:14px">✅ 好友已连接！</div>';
+      setTimeout(startGame, 600);
+    });
+    conn.on('data', onData);
+    conn.on('close', () => {
+      status.innerHTML = '<div class="err">❌ 连接已断开</div>';
+      setTimeout(()=>location.reload(),2000);
+    });
+  });
+
+  peer.on('error', e => {
+    status.innerHTML = `<div class="err">❌ 创建失败: ${e.type}</div>`;
+    document.querySelector('.btn-create').disabled = false;
+    document.querySelector('.btn-join').disabled = false;
+  });
+}
+
+// Join room
+function joinRoom(){
+  const input = document.getElementById('roomInput');
+  const code = input.value.trim().toLowerCase();
+  if(!code) return;
+
+  const fullId = code.startsWith(ROOM_PREFIX) ? code : ROOM_PREFIX + code;
+  peer = new Peer(undefined, {debug:0});
+
+  const status = document.getElementById('lobbyStatus');
+  status.innerHTML = '<div class="waiting">⏳ 正在连接...</div>';
+  document.querySelector('.btn-create').disabled = true;
+  document.querySelector('.btn-join').disabled = true;
+
+  peer.on('open', id => {
+    conn = peer.connect(fullId, {reliable:true});
+    conn.on('open', () => {
+      status.innerHTML = '<div style="color:#69f0ae;font-size:14px">✅ 已加入房间！</div>';
+      setTimeout(startGame, 600);
+    });
+    conn.on('data', onData);
+    conn.on('close', () => {
+      status.innerHTML = '<div class="err">❌ 连接已断开</div>';
+      setTimeout(()=>location.reload(),2000);
+    });
+  });
+
+  peer.on('error', e => {
+    status.innerHTML = '<div class="err">❌ 连接失败，检查房间号</div>';
+    document.querySelector('.btn-create').disabled = false;
+    document.querySelector('.btn-join').disabled = false;
+  });
+}
+
+// ======================================================================
+//  Network Message Handling
+// ======================================================================
+function send(msg){
+  if(conn && conn.open) conn.send(msg);
+}
+
+function onData(data){
+  if(typeof data !== 'object') return;
+
+  if(data.type === 'game_start'){
+    // Client received initial game state
+    if(!G.isHost){
+      G.myIdx = 1;
+      G.deck = data.deck;
+      G.players = data.players;
+      G.players[0].hole = data.myHole;
+      G.smallBlind = data.sb;
+      G.bigBlind = data.bb;
+      G.currentBet = data.currentBet;
+      G.street = data.street;
+      G.dealer = data.dealer;
+      G.turn = data.turn;
+      G.actedThisRound = data.acted;
+      enterGame();
+      render();
+      renderCtrls();
+    }
+  }
+
+  if(data.type === 'state_sync'){
+    G.comm = data.comm;
+    G.pot = data.pot;
+    G.currentBet = data.currentBet;
+    G.lastRaise = data.lastRaise;
+    G.street = data.street;
+    G.turn = data.turn;
+    G.roundOver = data.roundOver;
+    G.actedThisRound = data.actedThisRound;
+    G.players = data.players;
+
+    // Client's hole cards stay (sent separately for security)
+    if(data.myHole && !G.isHost) G.players[1].hole = data.myHole;
+
+    // Host's own hole cards
+    if(G.myIdx === 0 && data.hostHole) G.players[0].hole = data.hostHole;
+
+    render();
+    renderCtrls();
+  }
+
+  if(data.type === 'player_action'){
+    const {idx, action, amount, streetBet, chips, lastAction} = data;
+    if(G.players[idx]){
+      G.players[idx].streetBet = streetBet;
+      G.players[idx].chips = chips;
+      G.players[idx].lastAction = lastAction;
+      G.actedThisRound[idx] = true;
+    }
+    render();
+    renderCtrls();
+
+    // Host continues game logic after receiving client action
+    if(G.isHost && data.fromClient){
+      // Update pot
+      applyClientAction(idx, action, amount);
+    }
+  }
+
+  if(data.type === 'turn_notification'){
+    G.turn = data.turn;
+    G.actedThisRound = data.actedThisRound;
+    render();
+    renderCtrls();
+  }
+
+  if(data.type === 'showdown'){
+    G.street = 'showdown';
+    G.roundOver = true;
+    G.players = data.players;
+    if(!G.isHost) G.comm = data.comm;
+    document.getElementById('betPanel').style.display = 'none';
+    render();
+    renderCtrls();
+    // Show showdown info
+    setTimeout(()=>{
+      const msgEl = document.getElementById('msg');
+      msgEl.textContent = data.message;
+      msgEl.className = 'msg win';
+      render();
+    },300);
+  }
+
+  if(data.type === 'new_hand'){
+    G.deck = data.deck;
+    G.players = data.players;
+    G.comm = [];
+    G.pot = 0;
+    G.dealer = data.dealer;
+    G.street = 'preflop';
+    G.currentBet = G.bigBlind;
+    G.lastRaise = G.bigBlind;
+    G.roundOver = false;
+    G.actedThisRound = G.players.map(()=>false);
+    G.turn = data.turn;
+
+    if(!G.isHost && data.myHole) G.players[1].hole = data.myHole;
+    if(G.myIdx === 0 && data.myHole) G.players[0].hole = data.myHole;
+
+    document.getElementById('betPanel').style.display = 'none';
+    document.getElementById('msg').textContent = '';
+    document.getElementById('msg').className = 'msg';
+    // Remove showdown info
+    const sh = document.getElementById('shDiv');
+    if(sh) sh.remove();
+
+    render();
+    renderCtrls();
+  }
+}
+
+// ======================================================================
+//  Game Start
+// ======================================================================
+function startGame(){
+  document.getElementById('lobby').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'flex';
+
+  // Host initializes game
+  if(conn && conn.peer === myRoomCode.replace(ROOM_PREFIX,'')){
+    // Wait, actually let me determine host properly
+  }
+
+  // Determine host: creator has the known peer ID
+  const isHost = !!myRoomCode;
+  G.isHost = isHost;
+  G.myIdx = isHost ? 0 : 1;
+
+  if(isHost){
+    // Host creates the game
+    const deck = shuffle(createDeck());
+    G.deck = deck;
+    G.players = [
+      {name:'🧑 你',chips:1000,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false},
+      {name:'👤 朋友',chips:1000,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false},
+    ];
+    G.dealer = Math.random() < 0.5 ? 0 : 1;
+    G.smallBlind = 5;
+    G.bigBlind = 10;
+    dealNewHand();
+
+    // Send initial state to client
+    send({
+      type:'game_start',
+      deck: G.deck,
+      players: G.players.map((p,i)=>({...p, hole: i===0 ? [] : p.hole})),
+      myHole: G.players[1].hole,
+      sb: G.smallBlind, bb: G.bigBlind,
+      currentBet: G.currentBet,
+      street: G.street,
+      dealer: G.dealer,
+      turn: G.turn,
+      acted: G.actedThisRound,
+    });
+  }
+}
+
+function enterGame(){
+  document.getElementById('lobby').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'flex';
+}
+
+// ======================================================================
+//  Game Logic (Host Only)
+// ======================================================================
+function dealNewHand(){
+  G.deck = shuffle(createDeck());
+  G.comm = [];
+  G.pot = 0;
+  G.street = 'preflop';
+  G.roundOver = false;
+
+  G.players.forEach(p => {
+    p.hole = [G.deck.pop(), G.deck.pop()];
+    p.folded = false;
+    p.streetBet = 0;
+    p.lastAction = '';
+    p.showHand = false;
+  });
+
+  // Blinds
+  const sbIdx = (G.dealer + 1) % 2;
+  const bbIdx = (G.dealer + 2) % 2;
+  postBlindLocal(sbIdx, G.smallBlind);
+  postBlindLocal(bbIdx, G.bigBlind);
+
+  G.currentBet = G.bigBlind;
+  G.lastRaise = G.bigBlind;
+  G.lastAggressor = bbIdx;
+  G.turn = (bbIdx + 1) % 2;
+  G.actedThisRound = [false, false];
+  G.actedThisRound[sbIdx] = true;
+  G.actedThisRound[bbIdx] = true;
+
+  // Send to client
+  send({
+    type:'new_hand',
+    deck: G.deck,
+    players: G.players.map((p,i)=>({...p, hole: i===0 ? [] : p.hole})),
+    myHole: G.players[1].hole,
+    dealer: G.dealer,
+    turn: G.turn,
+  });
+
+  render();
+  renderCtrls();
+  checkTurn();
+}
+
+function postBlindLocal(idx, amt){
+  const p = G.players[idx];
+  const actual = Math.min(amt, p.chips);
+  p.chips -= actual;
+  p.streetBet += actual;
+  G.pot += actual;
+  p.lastAction = actual < amt && p.chips === 0 ? 'allin' : 'call';
+}
+
+function applyClientAction(idx, action, amount){
+  const p = G.players[idx];
+  const toCall = G.currentBet - p.streetBet;
+
+  switch(action){
+    case 'fold':
+      p.folded = true;
+      p.lastAction = 'fold';
+      break;
+    case 'check':
+      p.lastAction = 'check';
+      break;
+    case 'call':
+      const callAmt = Math.min(toCall, p.chips);
+      p.chips -= callAmt;
+      p.streetBet += callAmt;
+      G.pot += callAmt;
+      p.lastAction = callAmt < toCall ? 'allin' : 'call';
+      break;
+    case 'bet':
+    case 'raise':
+      const amt2 = Math.min(amount, p.chips + p.streetBet);
+      const betSize = amt2 - p.streetBet;
+      p.chips -= betSize;
+      G.pot += betSize;
+      p.streetBet = amt2;
+      G.currentBet = amt2;
+      G.lastRaise = amt2;
+      G.lastAggressor = idx;
+      p.lastAction = p.chips === 0 ? 'allin' : action;
+      G.actedThisRound = [false, false];
+      G.actedThisRound[idx] = true;
+      break;
+    case 'allin':
+      const allAmt = p.chips;
+      p.streetBet += allAmt;
+      G.pot += allAmt;
+      p.chips = 0;
+      p.lastAction = 'allin';
+      if(p.streetBet > G.currentBet){
+        G.currentBet = p.streetBet;
+        G.lastRaise = allAmt;
+        G.lastAggressor = idx;
+        G.actedThisRound = [false, false];
+        G.actedThisRound[idx] = true;
+      }
+      break;
+  }
+
+  checkStreetEnd();
+}
+
+function checkTurn(){
+  // If it's the other player's turn, send notification
+  if(G.turn === 1 && !G.roundOver && G.street !== 'showdown'){
+    syncState();
+    send({type:'turn_notification', turn:G.turn, actedThisRound:G.actedThisRound});
+  }
+}
+
+function checkStreetEnd(){
+  const active = G.players.map((p,i)=>i).filter(i=>!p.folded);
+  // Actually filter better
+  for(const i of [0,1]){
+    const p = G.players[i];
+    if(p.folded || p.out) active.splice(active.indexOf(i),1);
+  }
+  
+  const allAllIn = active.filter(i=>G.players[i].chips===0);
+  if(active.length <= 1){ endHand(); return; }
+
+  // Check if both acted and bets equal
+  const nonAllIn = active.filter(i=>G.players[i].chips>0);
+  const allActed = nonAllIn.every(i=>G.actedThisRound[i]);
+  const betsEqual = nonAllIn.every(i=>G.players[i].streetBet === G.currentBet);
+
+  if(allActed && betsEqual && nonAllIn.length > 0){
+    advanceStreet();
+  } else {
+    // Move to next player
+    const nxt = G.turn === 0 ? 1 : 0;
+    if(!G.players[nxt].folded && !G.players[nxt].out && !G.actedThisRound[nxt]){
+      G.turn = nxt;
+    } else {
+      advanceStreet();
+    }
+    syncState();
+    checkTurn();
+  }
+}
+
+function advanceStreet(){
+  if(G.street === 'preflop'){
+    G.street = 'flop';
+    G.comm.push(G.deck.pop(), G.deck.pop(), G.deck.pop());
+  } else if(G.street === 'flop'){
+    G.street = 'turn';
+    G.comm.push(G.deck.pop());
+  } else if(G.street === 'turn'){
+    G.street = 'river';
+    G.comm.push(G.deck.pop());
+  } else {
+    endHand();
+    return;
+  }
+
+  resetStreet();
+  render();
+  renderCtrls();
+  checkTurn();
+}
+
+function resetStreet(){
+  G.players.forEach(p => { p.streetBet = 0; p.lastAction = ''; });
+  G.currentBet = 0;
+  G.lastRaise = 0;
+  G.lastAggressor = -1;
+  G.actedThisRound = [false, false];
+  G.turn = G.dealer === 0 ? 1 : 0; // First to act after dealer
+  // If that player folded, switch
+  if(G.players[G.turn].folded) G.turn = G.turn === 0 ? 1 : 0;
+  syncState();
+}
+
+function endHand(){
+  G.street = 'showdown';
+  G.roundOver = true;
+  document.getElementById('betPanel').style.display = 'none';
+
+  const active = G.players.filter((p,i)=>!p.folded && !p.out);
+  if(active.length === 1){
+    active[0].chips += G.pot;
+    const msg = `${active[0].name} 赢得 $${G.pot}（对方弃牌）`;
+    send({type:'showdown', players:G.players, comm:G.comm, message:msg});
+    const msgEl = document.getElementById('msg');
+    msgEl.textContent = msg;
+    msgEl.className = 'msg win';
+    render(); renderCtrls();
+    return;
+  }
+
+  // Showdown
+  G.players.forEach(p => { if(!p.folded) p.showHand = true; });
+
+  let best = null, bestPlayers = [];
+  for(const p of G.players){
+    if(p.folded) continue;
+    const all = [...p.hole, ...G.comm];
+    p.handResult = bestHand(all);
+    if(!best || cmpHands(p.handResult, best) > 0){
+      best = p.handResult; bestPlayers = [p];
+    } else if(cmpHands(p.handResult, best) === 0){
+      bestPlayers.push(p);
+    }
+  }
+
+  const share = Math.floor(G.pot / bestPlayers.length);
+  const rem = G.pot % bestPlayers.length;
+  bestPlayers.forEach((p,i) => { p.chips += share + (i===0 ? rem : 0); });
+
+  let msg;
+  if(bestPlayers.length === 1) msg = `🏆 ${bestPlayers[0].name} 获胜！${best.n}`;
+  else msg = `🤝 平局 — ${best.n}`;
+  msg += ` — 赢得 $${G.pot}`;
+
+  send({type:'showdown', players:G.players, comm:G.comm, message:msg});
+  const msgEl = document.getElementById('msg');
+  msgEl.textContent = msg;
+  msgEl.className = 'msg win';
+  render(); renderCtrls();
+}
+
+// Sync full state to client
+function syncState(){
+  if(!conn || !conn.open) return;
+  send({
+    type:'state_sync',
+    comm: G.comm,
+    pot: G.pot,
+    currentBet: G.currentBet,
+    lastRaise: G.lastRaise,
+    street: G.street,
+    turn: G.turn,
+    roundOver: G.roundOver,
+    actedThisRound: G.actedThisRound,
+    players: G.players.map((p,i)=>({
+      ...p,
+      // Don't send opponent's hole cards before showdown
+      hole: i===1 && G.street !== 'showdown' ? [] : p.hole,
+    })),
+    hostHole: G.players[0].hole,
+    myHole: G.players[1].hole, // Client's hole cards
+  });
+}
+
+// ======================================================================
+//  Player Action (called from UI)
+// ======================================================================
+function doAction(action, amount){
+  if(G.roundOver || G.street === 'showdown' || G.street === 'idle') return;
+  const idx = G.myIdx;
+  if(G.turn !== idx) return;
+
+  const p = G.players[idx];
+  if(!p || p.folded) return;
+
+  const toCall = G.currentBet - p.streetBet;
+
+  // Calculate result locally first
+  let streetBet = p.streetBet;
+  let chips = p.chips;
+  let lastAction = '';
+
+  switch(action){
+    case 'fold': lastAction = 'fold'; break;
+    case 'check': lastAction = 'check'; break;
+    case 'call':
+      const callAmt = Math.min(toCall, chips);
+      chips -= callAmt;
+      streetBet += callAmt;
+      lastAction = callAmt < toCall ? 'allin' : 'call';
+      break;
+    case 'bet':
+    case 'raise':
+      const amt2 = Math.min(amount, chips + streetBet);
+      chips -= (amt2 - streetBet);
+      streetBet = amt2;
+      lastAction = chips === 0 ? 'allin' : action;
+      break;
+    case 'allin':
+      chips = 0;
+      streetBet += p.chips;
+      lastAction = 'allin';
+      break;
+  }
+
+  // Update local display immediately
+  p.chips = chips;
+  p.streetBet = streetBet;
+  p.lastAction = lastAction;
+  G.actedThisRound[idx] = true;
+
+  render();
+  renderCtrls();
+
+  // Send action to host
+  if(G.isHost){
+    // Host: process locally
+    applyClientAction(idx, action, amount);
+  } else {
+    // Client: send to host
+    send({
+      type:'player_action',
+      fromClient: true,
+      idx,
+      action,
+      amount: amount || 0,
+      streetBet,
+      chips,
+      lastAction,
+    });
+    // Show waiting
+    document.getElementById('msg').textContent = '⏳ 等待对手操作...';
+    document.getElementById('msg').className = 'msg';
+  }
+}
+
+// ======================================================================
+//  DOM & Render
+// ======================================================================
 const $=id=>document.getElementById(id);
 const potD=$('potDisplay'),phaseL=$('phaseLabel'),msgE=$('msg');
 const commEl=$('communityCards'),topEl=$('playersTop'),botEl=$('playersBottom');
-const ctrls=$('controls'),startBtn=$('startBtn');
+const ctrls=$('controls');
 const betPanel=$('betPanel'),betSlider=$('betSlider'),betValue=$('betValue'),confirmBet=$('confirmBetBtn');
-const SHOWDOWN_ID = 'shDiv';
+const SHOWDOWN_ID='shDiv';
 
-// ========== Render ==========
 function cardHTML(c,s=''){
-  return `<div class="card ${isRed(c)?'red':''} ${s}">`+
-    `<span class="suit">${c.s}</span><span>${c.r}</span></div>`;
+  return `<div class="card ${isRed(c)?'red':''} ${s}"><span class="suit">${c.s}</span><span>${c.r}</span></div>`;
 }
 function cardBack(s=''){return `<div class="card back ${s}"></div>`}
-function cardBackDelay(s='',d=''){return `<div class="card back ${s} ${d}"></div>`}
 
 function render(){
   potD.textContent=G.pot;
@@ -287,28 +887,29 @@ function render(){
   // Community
   commEl.innerHTML='';
   if(G.street==='idle'){
-    commEl.innerHTML=cardBackDelay('tiny','delay1')+cardBackDelay('tiny','delay2')+cardBackDelay('tiny','delay3')+cardBackDelay('tiny','delay4')+cardBackDelay('tiny','delay5');
+    commEl.innerHTML=cardBack('tiny')+cardBack('tiny')+cardBack('tiny')+cardBack('tiny')+cardBack('tiny');
   }else{
-    const delayClasses=['delay1','delay2','delay3','delay4','delay5'];
     for(let i=0;i<5;i++){
-      if(i<G.comm.length)commEl.innerHTML+=cardHTML(G.comm[i]);
-      else if(G.street!=='showdown')commEl.innerHTML+=cardBackDelay('',delayClasses[i]);
+      if(i<G.comm.length) commEl.innerHTML+=cardHTML(G.comm[i]);
+      else if(G.street!=='showdown') commEl.innerHTML+=cardBack('tiny');
     }
   }
 
   // Players
-  const me=G.players[0],ais=G.players.slice(1);
-  // Show player cards for me always visible
-  topEl.innerHTML=ais.map((p,i)=>renderPlayer(p,i+1)).join('');
-  botEl.innerHTML=renderPlayer(me,0);
+  const me=G.players[G.myIdx];
+  const opp=G.players[1-G.myIdx];
+  if(!me||!opp) return;
+
+  topEl.innerHTML=renderPlayer(opp,1-G.myIdx);
+  botEl.innerHTML=renderPlayer(me,G.myIdx);
 
   // Showdown info
   const existing=document.getElementById(SHOWDOWN_ID);
-  if(G.street==='showdown'&&G.players.some(p=>p.status==='show'||p.handResult)){
+  if(G.street==='showdown'&&G.players.some(p=>p.showHand||p.handResult)){
     if(!existing){
       const d=document.createElement('div');d.className='showdown-info';d.id=SHOWDOWN_ID;
-      G.players.filter(p=>p.status!=='fold').forEach(p=>{
-        const h=bestHand([...p.hole,...G.comm]);
+      G.players.filter(p=>!p.folded).forEach(p=>{
+        const h=p.handResult || bestHand([...p.hole,...G.comm]);
         if(h){
           const dd=document.createElement('div');dd.className='sh-player';
           dd.innerHTML=`<div class="sh-name">${p.name}</div><div class="sh-hand">${h.n}</div>`;
@@ -317,11 +918,11 @@ function render(){
       });
       document.querySelector('.center')?.appendChild(d);
     }
-  }else if(existing)existing.remove();
+  }else if(existing) existing.remove();
 }
 
 function renderPlayer(p,idx){
-  const isMe=idx===0;
+  const isMe=idx===G.myIdx;
   const isActive=G.turn===idx&&G.street!=='idle'&&G.street!=='showdown'&&!G.roundOver;
   let cls=`player${isMe?' me':''}${isActive?' active':''}`;
 
@@ -345,54 +946,44 @@ function renderPlayer(p,idx){
   </div>`;
 }
 
-const PHASE_NAMES={idle:'等待开始',preflop:'翻牌前',flop:'翻牌',turn:'转牌',river:'河牌',showdown:'摊牌'};
-const ACTION_TEXT={fold:'弃牌 ✕',check:'过牌 ✓',bet:'下注 ↑',call:'跟注',raise:'加注 ↑',allin:'ALL-IN!'};
-
 function renderCtrls(){
   ctrls.innerHTML='';
   if(G.street==='idle'||G.roundOver){
-    ctrls.innerHTML=`<button class="btn-new" onclick="newHand()">♠ 下一局</button>`;
+    if(G.isHost) ctrls.innerHTML=`<button class="btn-new" onclick="dealNewHand()">♠ 下一局</button>`;
+    else ctrls.innerHTML='<div style="font-size:13px;opacity:.5;text-align:center">等待房主开始下一局</div>';
     return;
   }
-  const me=G.players[MY_INDEX];
-  if(!me||me.folded||me.out||G.turn!==MY_INDEX)return;
+  if(G.turn!==G.myIdx){ return; }
+
+  const me=G.players[G.myIdx];
+  if(!me||me.folded) return;
 
   const toCall=G.currentBet-me.streetBet;
-  const canAct=me.chips>0&&!me.folded;
 
-  if(!canAct)return;
-
-  // Fold is always available if there's a bet to call
   ctrls.innerHTML+=`<button class="btn-fold" onclick="doAction('fold')">弃牌 ✕</button>`;
 
   if(toCall===0){
-    // No bet to call: check or bet
     ctrls.innerHTML+=`<button class="btn-check" onclick="doAction('check')">过牌 ✓</button>`;
     if(me.chips>0){
       ctrls.innerHTML+=`<button class="btn-bet" onclick="showBetPanel('bet')">下注</button>`;
     }
   }else{
-    // There's a bet to call
     ctrls.innerHTML+=`<button class="btn-call" onclick="doAction('call')">跟注 $${toCall}</button>`;
-    // Raise: need at least toCall + call, and chips must be > toCall
     const minRaise=Math.max(G.lastRaise||G.bigBlind,G.bigBlind);
     const raiseTotal=toCall+minRaise;
     if(me.chips>toCall&&me.chips>=raiseTotal){
       ctrls.innerHTML+=`<button class="btn-raise" onclick="showBetPanel('raise')">加注 ↑</button>`;
     }else if(me.chips>toCall){
-      // Can only go all-in as a raise
       ctrls.innerHTML+=`<button class="btn-raise" onclick="doAction('allin')">All-in $${me.chips}</button>`;
     }
   }
-
-  // All-in button (if we have chips and we're not already calling all-in)
   if(me.chips>0&&toCall<me.chips){
     ctrls.innerHTML+=`<button class="btn-allin" onclick="doAction('allin')">All-in $${me.chips}</button>`;
   }
 }
 
 function showBetPanel(mode){
-  const me=G.players[MY_INDEX];
+  const me=G.players[G.myIdx];
   if(!me)return;
   const toCall=G.currentBet-me.streetBet;
   const minBet=G.bigBlind;
@@ -403,7 +994,6 @@ function showBetPanel(mode){
     minVal=Math.min(minBet,me.chips);
     maxVal=me.chips;
   }else{
-    // raise
     minVal=Math.min(toCall+minRaise,me.chips);
     maxVal=me.chips;
   }
@@ -422,399 +1012,15 @@ confirmBet.addEventListener('click',()=>{
   const val=parseInt(betSlider.value);
   const mode=betPanel.dataset.mode;
   betPanel.style.display='none';
-  if(mode==='bet')doAction('bet',val);
-  else doAction('raise',val);
+  doAction(mode==='bet'?'bet':'raise',val);
 });
 
-// ========== Game Logic ==========
-function newHand(){
-  // Clear showdown
-  const sh=document.getElementById(SHOWDOWN_ID);
-  if(sh)sh.remove();
-
-  G.hand++;
-  G.deck=shuffle(createDeck());
-  G.comm=[];
-  G.pot=0;
-  G.street='preflop';
-  G.roundOver=false;
-  G.actionInProgress=false;
-  msgE.textContent='';msgE.className='msg';
-
-  // Init players
-  const me=G.players[MY_INDEX]||{name:'🧑 你',chips:1000,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false,handResult:null};
-  me.hole=[];me.folded=false;me.streetBet=0;me.lastAction='';me.showHand=false;me.handResult=null;
-  G.players=[me,...AI_NAMES.map(n=>({name:n,chips:500,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false,handResult:null}))];
-  G.playedThis=G.players.map((_,i)=>i);
-
-  // Ensure chips
-  G.players.forEach(p=>{if(p.chips<=0)p.chips=500;p.out=p.chips<=0});
-
-  // Deal hole
-  G.players.forEach(p=>{p.hole=[G.deck.pop(),G.deck.pop()]});
-
-  // Init acted-this-round tracking BEFORE any actions
-  G.actedThisRound=G.players.map(()=>false);
-
-  // Blinds
-  const sbIdx=(G.dealer+1)%G.players.length;
-  const bbIdx=(G.dealer+2)%G.players.length;
-  postBlind(sbIdx,G.smallBlind);
-  postBlind(bbIdx,G.bigBlind);
-
-  // Start preflop betting
-  G.currentBet=G.bigBlind;
-  G.lastRaise=G.bigBlind;
-  G.lastAggressor=bbIdx;
-
-  // First to act: UTG (player left of BB)
-  G.turn=(bbIdx+1)%G.players.length;
-  // Skip folded/all-in (G.actedThisRound now valid)
-  advanceTurn();
-
-  startBtn.textContent='♠ 重新发牌';
-  render();
-  renderCtrls();
-  scheduleAI();
-}
-
-function postBlind(idx,amt){
-  const p=G.players[idx];
-  const actual=Math.min(amt,p.chips);
-  p.chips-=actual;
-  p.streetBet+=actual;
-  G.pot+=actual;
-  p.lastAction='';
-  // Don't mark as acted — SB/BB still need to act in the betting round
-}
-
-// ========== Action ==========
-function doAction(action,amount){
-  if(G.roundOver||G.street==='showdown'||G.street==='idle')return;
-  const idx=G.turn;
-  const p=G.players[idx];
-  if(!p||p.folded||p.out||idx!==G.turn)return;
-
-  // Don't allow if AI is thinking
-  G.actionInProgress=false; // reset if previously blocked
-
-  applyAction(idx,action,amount);
-  G.actedThisRound[idx]=true;
-
-  render();
-  renderCtrls();
-  checkStreetEnd();
-}
-
-function applyAction(idx,action,amount){
-  const p=G.players[idx];
-  const toCall=G.currentBet-p.streetBet;
-
-  switch(action){
-    case 'fold':
-      p.folded=true;
-      p.lastAction='fold';
-      break;
-    case 'check':
-      p.lastAction='check';
-      break;
-    case 'call':
-      const callAmt=Math.min(toCall,p.chips);
-      p.chips-=callAmt;
-      p.streetBet+=callAmt;
-      G.pot+=callAmt;
-      p.lastAction=callAmt<toCall?'allin':'call';
-      if(p.chips===0&&callAmt<toCall)p.lastAction='allin';
-      break;
-    case 'bet':
-      const betAmt=Math.min(amount,p.chips);
-      p.chips-=betAmt;
-      p.streetBet+=betAmt;
-      G.currentBet=p.streetBet;
-      G.lastRaise=betAmt;
-      G.lastAggressor=idx;
-      G.pot+=betAmt;
-      p.lastAction=betAmt>=(p.chips+betAmt)?'allin':'bet';
-      // Reset acted tracking — new bet means everyone needs to act again
-      G.actedThisRound=G.playedThis.map((_,i)=>i===idx);
-      break;
-    case 'raise':
-      const raiseAmt=Math.min(amount,p.chips);
-      p.chips-=raiseAmt;
-      p.streetBet+=raiseAmt;
-      G.currentBet=p.streetBet;
-      G.lastRaise=raiseAmt;
-      G.lastAggressor=idx;
-      G.pot+=raiseAmt;
-      p.lastAction=raiseAmt>=(p.chips+raiseAmt)?'allin':'raise';
-      // Reset acted tracking
-      G.actedThisRound=G.playedThis.map((_,i)=>i===idx);
-      break;
-    case 'allin':
-      const allAmt=p.chips;
-      p.chips=0;
-      p.streetBet+=allAmt;
-      G.pot+=allAmt;
-      if(p.streetBet>G.currentBet){
-        G.currentBet=p.streetBet;
-        G.lastRaise=allAmt;
-        G.lastAggressor=idx;
-        G.actedThisRound=G.playedThis.map((_,i)=>i===idx);
-      }
-      p.lastAction='allin';
-      break;
-  }
-}
-
-// ========== Street Management ==========
-function checkStreetEnd(){
-  const active=getActive();
-  if(active.length<=1){endHand();return;}
-
-  // Check if all active players are all-in
-  const allAllIn=active.every(pi=>G.players[pi].chips===0);
-  if(allAllIn){dealRemaining();return;}
-
-  // Check if all active (non-all-in) players have acted and bets are equal
-  const nonAllIn=active.filter(pi=>G.players[pi].chips>0);
-  const allActed=nonAllIn.every(pi=>G.actedThisRound[pi]);
-  const betsEqual=nonAllIn.every(pi=>G.players[pi].streetBet===G.currentBet);
-
-  if(allActed&&betsEqual){
-    advanceStreet();
-  }else{
-    // Move to next player
-    advanceTurn();
-    render();
-    renderCtrls();
-    scheduleAI();
-  }
-}
-
-function advanceTurn(){
-  const n=G.players.length;
-  for(let i=1;i<=n;i++){
-    const idx=(G.turn+i)%n;
-    const p=G.players[idx];
-    if(!p.folded&&!p.out&&p.chips>0&&G.actedThisRound[idx]===false){
-      G.turn=idx;
-      return;
-    }
-  }
-  // If no one left to act (everyone all-in or folded)
-  // Check if we can advance
-  checkStreetEnd();
-}
-
-function advanceStreet(){
-  switch(G.street){
-    case 'preflop':
-      G.street='flop';
-      G.comm.push(G.deck.pop(),G.deck.pop(),G.deck.pop());
-      break;
-    case 'flop':
-      G.street='turn';
-      G.comm.push(G.deck.pop());
-      break;
-    case 'turn':
-      G.street='river';
-      G.comm.push(G.deck.pop());
-      break;
-    case 'river':
-      endHand();
-      return;
-  }
-
-  if(G.street!=='showdown'){
-    resetStreetBetting();
-    render();
-    renderCtrls();
-    scheduleAI();
-  }
-}
-
-function dealRemaining(){
-  while(G.comm.length<5)G.comm.push(G.deck.pop());
-  endHand();
-}
-
-function resetStreetBetting(){
-  G.players.forEach(p=>{p.streetBet=0;p.lastAction=''});
-  G.currentBet=0;
-  G.lastRaise=0;
-  G.lastAggressor=-1;
-  G.actedThisRound=G.players.map(()=>false);
-
-  // First to act: first active player left of dealer
-  const n=G.players.length;
-  for(let i=1;i<=n;i++){
-    const idx=(G.dealer+i)%n;
-    const p=G.players[idx];
-    if(!p.folded&&!p.out){
-      G.turn=idx;
-      return;
-    }
-  }
-}
-
-// ========== End Hand ==========
-function endHand(){
-  G.street='showdown';
-  G.roundOver=true;
-  betPanel.style.display='none';
-
-  const active=G.players.filter(p=>!p.folded&&!p.out);
-  const activeAllIn=G.players.filter(p=>!p.folded);
-
-  if(active.length===1){
-    active[0].chips+=G.pot;
-    msgE.textContent=`${active[0].name} 赢得 $${G.pot}（其他人全部弃牌）`;
-    msgE.className='msg win';
-    render();
-    renderCtrls();
-    return;
-  }
-
-  // Reveal all hands
-  G.players.forEach(p=>{if(!p.folded)p.showHand=true});
-
-  // Evaluate
-  let best=null,bestPlayers=[];
-  activeAllIn.forEach(p=>{
-    const all=[...p.hole,...G.comm];
-    p.handResult=bestHand(all);
-    if(!best||cmpHands(p.handResult,best)>0){best=p.handResult;bestPlayers=[p]}
-    else if(cmpHands(p.handResult,best)===0)bestPlayers.push(p);
-  });
-
-  const share=Math.floor(G.pot/bestPlayers.length);
-  const rem=G.pot%bestPlayers.length;
-  bestPlayers.forEach((p,i)=>{p.chips+=share+(i===0?rem:0)});
-
-  let txt;
-  if(bestPlayers.length===1)txt=`🏆 ${bestPlayers[0].name} 获胜！${best.n}`;
-  else txt=`🤝 平局！${bestPlayers.map(p=>p.name).join('、')} — ${best.n}`;
-  txt+=` — 赢得 $${G.pot}`;
-  msgE.textContent=txt;
-  msgE.className='msg win';
-
-  render();
-  renderCtrls();
-}
-
-// ========== AI ==========
-function scheduleAI(){
-  if(G.roundOver||G.street==='showdown'||G.street==='idle')return;
-  const idx=G.turn;
-  if(idx===MY_INDEX)return;
-  const p=G.players[idx];
-  if(!p||p.folded||p.out)return;
-
-  G.actionInProgress=true;
-  const delay=500+Math.random()*600;
-  setTimeout(()=>{
-    if(G.roundOver||G.street==='showdown'){G.actionInProgress=false;return;}
-    if(G.turn!==idx||p.folded||p.out){G.actionInProgress=false;return;}
-    aiThink(idx);
-  },delay);
-}
-
-function aiThink(idx){
-  const p=G.players[idx];
-  if(!p||p.folded||p.out||G.turn!==idx)return;
-  const toCall=G.currentBet-p.streetBet;
-
-  // Evaluate hand strength
-  const strength=aiEvalStrength(p.hole,G.comm);
-
-  // Pot odds
-  const potOdds=toCall/(G.pot+toCall||1);
-
-  // Facing a bet
-  if(toCall===0){
-    // No bet: check or bet
-    if(strength>0.5&&Math.random()<strength-0.2){
-      // Bet
-      const betSize=Math.floor(G.bigBlind*(1+strength*2));
-      const amt=Math.min(Math.max(betSize,1),p.chips);
-      applyAction(idx,'bet',amt);
-    }else{
-      applyAction(idx,'check');
-    }
-  }else if(p.chips<=toCall){
-    // Forced all-in
-    applyAction(idx,strength>0.3?'allin':'fold');
-  }else{
-    // Facing a bet
-    if(strength>potOdds+0.12){
-      if(strength>0.6&&Math.random()<0.45){
-        // Raise
-        const minRaise=Math.max(G.lastRaise||G.bigBlind,G.bigBlind);
-        const raiseSize=Math.min(toCall+Math.max(minRaise,Math.floor(p.chips*strength*0.5)),p.chips);
-        if(raiseSize>=p.chips)applyAction(idx,'allin');
-        else applyAction(idx,'raise',raiseSize);
-      }else{
-        applyAction(idx,'call');
-      }
-    }else if(strength>potOdds-0.08&&Math.random()<0.25){
-      applyAction(idx,'call');
-    }else{
-      applyAction(idx,'fold');
-    }
-  }
-
-  G.actedThisRound[idx]=true;
-  render();
-  renderCtrls();
-  checkStreetEnd();
-}
-
-function aiEvalStrength(hole,comm){
-  const all=[...hole,...comm];
-  let score=0;
-
-  // Hole cards
-  const v=[val(hole[0]),val(hole[1])].sort((a,b)=>b-a);
-  score+=((v[0]-2)/12)*0.12+((v[1]-2)/12)*0.06;
-
-  // Pocket pair
-  if(hole[0].r===hole[1].r)score+=0.2;
-
-  // Suited
-  if(hole[0].s===hole[1].s)score+=0.08;
-
-  // Connected
-  const diff=v[0]-v[1];
-  if(diff<=2)score+=0.06;
-  if(diff<=1)score+=0.04;
-
-  // High cards
-  if(v[0]>=12)score+=0.08;
-  if(v[0]>=14)score+=0.05;
-
-  if(comm.length>=3){
-    const h=bestHand(all);
-    if(h)score=Math.max(score,h.r/10+h.k[0]/100);
-  }
-
-  return Math.min(score,0.98);
-}
-
-// ========== Helpers ==========
-function getActive(){
-  return G.players.map((p,i)=>({p,i})).filter(({p})=>!p.folded&&!p.out).map(({i})=>i);
-}
-
-// ========== Init ==========
-startBtn.addEventListener('click',newHand);
-
-// Pre-render
-(function init(){
-  G.players=[{name:'🧑 你',chips:1000,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false,handResult:null}];
-  AI_NAMES.forEach(n=>{G.players.push({name:n,chips:500,hole:[],folded:false,out:false,streetBet:0,lastAction:'',showHand:false,handResult:null})});
-  G.playedThis=G.players.map((_,i)=>i);
-  render();
-})();
+// ======================================================================
+//  Init
+// ======================================================================
+document.getElementById('startBtn')?.addEventListener('click', ()=>{
+  if(G.isHost) dealNewHand();
+});
 </script>
 </body>
 </html>
